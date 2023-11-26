@@ -1,0 +1,67 @@
+﻿@page "/"
+@using BookstoreLab.Data
+@using BookstoreLab.Models
+@using Microsoft.EntityFrameworkCore
+@inject StoreDBContext dbContext
+
+<PageTitle>Bultens Bokhandel</PageTitle>
+
+<h1>Bultens Bokhandel</h1>
+
+<div class="row">
+	@foreach (var store in AllStores)
+	{
+			<div class="col-md-6">
+				<div class="card">
+					<div class="card-body">
+						<h5 class="card-title">@store.StoreName</h5>
+						<div>
+						@foreach (var book in AllBooksInStore.Where(b => b.StoreId == store.StoreId))
+						{
+									<div>
+								@book.Title @book.FirstName @book.LastName - @book.Quantity in stock
+										<button @onclick="() => AddBook(book.Isbn13, store.StoreId, 1)">Add</button>
+										<button @onclick="() => RemoveBook(book.Isbn13, store.StoreId, 1)">Remove</button>
+									</div>
+						}
+						</div>
+					</div>
+				</div>
+			</div>
+	}
+</div>
+
+@code {
+	private List<BooksInStore2> AllBooksInStore = new List<BooksInStore2>();
+	private List<Store> AllStores = new List<Store>();
+
+	protected override async Task OnInitializedAsync()
+	{
+		AllBooksInStore = await dbContext.BooksInStore2s.ToListAsync();
+		AllStores = await dbContext.Stores.ToListAsync();
+	}
+
+	private async Task AddBook(string isbn, int storeId, int quantity)
+	{
+		var bookToUpdate = await dbContext.InventoryBalances.FirstOrDefaultAsync(i => i.Isbn13 == isbn && i.StoreId == storeId);
+		if (bookToUpdate != null)
+		{
+			bookToUpdate.Quantity += quantity;
+			await dbContext.SaveChangesAsync();
+		}
+	}
+
+	private async Task RemoveBook(string isbn, int storeId, int quantity)
+	{
+		var bookToUpdate = await dbContext.InventoryBalances.FirstOrDefaultAsync(i => i.Isbn13 == isbn && i.StoreId == storeId);
+		if (bookToUpdate != null)
+		{
+			bookToUpdate.Quantity -= quantity;
+			await dbContext.SaveChangesAsync();
+		}
+	}
+}
+
+
+
+
